@@ -108,6 +108,8 @@
                         <a class="nav-link" href="{{route('admin-tasks')}}">Задания<span class="sr-only">(current)</span></a>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" href="/stat">Статистика<span class="sr-only">(current)</span></a>
                     </li>
 
 

@@ -8,6 +8,8 @@ Auth::routes();
 Route::get('/desk', 'DeskController@index')->name('admin');
 
 
+Route::get('/stat', 'AdminController@stat');
+
 
 
 Route::get('/admin', 'AdminController@index')->name('admin');

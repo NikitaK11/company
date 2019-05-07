@@ -11,6 +11,7 @@ use App\Models\News;
 use App\Models\Order;
 use App\Models\PaymentTypes;
 use App\Models\Place;
+use App\Models\Status;
 use App\Models\Task;
 use App\Models\TaskPriority;
 use App\Models\TaskStatus;
@@ -18,6 +19,7 @@ use App\Models\TaskType;
 use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use SebastianBergmann\CodeCoverage\Report\Xml\Project;
 
 class AdminController extends Controller
@@ -29,8 +31,55 @@ class AdminController extends Controller
     }
 
 
+    public function stat(Request $request){
+        $data = $request->all();
+
+
+        $data['projects'] = \App\Models\Project::all();
+
+        $data['users'] = User::all();
+
+        $query = Task::query();
+
+        if(!empty($data['executor_id'])){
+            $query->where(['executor_id'=>$data['executor_id']]);
+        }
+        else{
+            $data['executor_id'] = 0;
+        }
+
+        if(!empty($data['project_id'])){
+            $query->where(['project_id'=>$data['project_id']]);
+        }
+        else{
+            $data['project_id'] = 0;
+        }
+
+         $data['statuses'] = Status::all();
+
+        $data['tasks'] = Task::all();
+
+        foreach ($data['users'] as &$user){
+            $q = clone $query;
+            $user['stat'] = $q
+                ->where(['executor_id'=>$user->id])
+                ->groupBy('task_status_id')
+                ->selectRaw('count(*) as count, task_status_id')
+                ->get();
+        }
+
+
+        return view('admin.stat')->with($data);
+    }
+
+
 
     public function users(){
+
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
+
         $data['users'] = User::with(['userType'])->get();
 
 
@@ -38,12 +87,18 @@ class AdminController extends Controller
     }
 
     public function userAddView (){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data['userTypes'] = UserType::all();
         $data['departments'] = Department::all();
         return view('admin.user-add')->with($data);
     }
 
     public function userAdd(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $user = new User();
         $user->name = $data['name'];
@@ -57,6 +112,9 @@ class AdminController extends Controller
     }
 
     public function user(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['user'] = User::with(['userType','department'])
 
@@ -67,6 +125,9 @@ class AdminController extends Controller
     }
 
     public function userEditView (Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['userTypes'] = UserType::all();
         $data['departments'] = Department::all();
@@ -75,6 +136,9 @@ class AdminController extends Controller
     }
 
     public function userEdit(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
 
 
@@ -103,11 +167,17 @@ class AdminController extends Controller
 
 
     public function departments(){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data['departments'] = Department::all();
         return view('admin.departments')->with($data);
     }
 
     public function department(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['department'] = Department::with(['users'])
             ->where(['departments.id'=>$data['id']])
@@ -116,6 +186,9 @@ class AdminController extends Controller
     }
 
     public function departmentEdit(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['users'] = User::with('userType')->get();
         $data['department'] = Department::query()->where(['id'=>$data['id']])->first();
@@ -123,6 +196,9 @@ class AdminController extends Controller
     }
 
     public function departmentUpdate(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
 
 
@@ -156,11 +232,17 @@ class AdminController extends Controller
     }
 
     public function departmentCreateView(){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data['users'] = User::with(['userType'])->get();
         return view('admin.department-create')->with($data);
     }
 
     public function departmentCreate(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $department = new Department();
         $department->name = $data['name'];
@@ -173,24 +255,36 @@ class AdminController extends Controller
     }
 
     public function projects(){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data['projects'] = \App\Models\Project::all();
 
         return view('admin.projects')->with($data);
     }
 
     public function project(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['project'] = \App\Models\Project::query()->where(['id'=>$data['id']])->first();
         return view('admin.project')->with($data);
     }
 
     public function projectEdit(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['project'] = \App\Models\Project::query()->where(['id'=>$data['id']])->first();
         return view('admin.projectEdit')->with($data);
     }
 
     public function projectUpdate(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $project = \App\Models\Project::query()->where(['id'=>$data['id']])->first();
         $data['project'] = $project;
@@ -213,10 +307,16 @@ class AdminController extends Controller
     }
 
     public function projectCreate(){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         return view('admin.project-create');
     }
 
     public function projectAdd(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $project = new \App\Models\Project();
 
@@ -237,6 +337,9 @@ class AdminController extends Controller
 
     public function tasks(Request $request)
     {
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $query = Task::with(['type', 'status', 'priority', 'project', 'executor', 'creator']);
         $data['projects'] = \App\Models\Project::all();
@@ -271,6 +374,9 @@ class AdminController extends Controller
     }
 
     public function task(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['task'] =  Task::with(['type','status','priority','project','executor','creator'])
             ->where(['id'=>$data['id']])
@@ -286,6 +392,9 @@ class AdminController extends Controller
     }
 
     public function taskEdit(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $data['task'] =  Task::with(['type','status','priority','project','executor','creator'])
             ->where(['id'=>$data['id']])
@@ -301,6 +410,9 @@ class AdminController extends Controller
     }
 
     public function taskUpdate(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
         $task = Task::query()->where(['id'=>$data['id']])->first();
 
@@ -324,6 +436,9 @@ class AdminController extends Controller
     }
 
     public function taskCreate(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
 
         $data['projects'] = \App\Models\Project::all();
@@ -336,6 +451,9 @@ class AdminController extends Controller
     }
 
     public function taskAdd(Request $request){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         $data = $request->all();
 
         $task = new Task();
@@ -375,6 +493,9 @@ class AdminController extends Controller
 
 
     public function index(){
+        if( !Auth::user()->admin){
+            return redirect('/');
+        }
         return view('admin.index');
     }
 

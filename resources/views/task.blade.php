@@ -43,9 +43,13 @@
                             <div class="input-group-prepend">
                                 <div class="input-group-text">Исполнитель</div>
                             </div>
-                            <input readonly name="point"   type="text" class="form-control"  value="{{  $task->executor->name}}" >
-
-
+                            <select readonly name="executor_id" class="form-control">
+                                @foreach($users as $user)
+                                    <option {{$task->executor_id == $user->id ? 'selected' : ' '}} value="{{$user->id}}">
+                                        {{$user->name}}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -142,7 +146,12 @@
 
 
 
-                @if(\Illuminate\Support\Facades\Auth::id() ==  $task->executor->id)
+                @if(\Illuminate\Support\Facades\Auth::id() ==  $task->executor->id
+                ||
+                    ( !empty($task->executor->departmnt->chief->id) &&
+                        $task->executor->departmnt->chief->id == \Illuminate\Support\Facades\Auth::id()
+                    )
+                )
                     <input class="col-lg-offset-8 btn btn-success" type="submit" value="Обновить статус">
 
                 @endif
@@ -167,11 +176,6 @@
                         </div>
                     </div>
                 </div>
-
-
-
-
-
             </div>
 
         </form>

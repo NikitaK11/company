@@ -8,7 +8,9 @@ use App\Models\Task;
 use App\Models\TaskPriority;
 use App\Models\TaskStatus;
 use App\Models\TaskType;
+use App\Models\Telegram;
 use App\Models\User;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,6 +41,8 @@ class TaskController extends Controller
             $query->where(['project_id'=>$data['project_id']]);
         }
 
+
+
         $data['tasks'] = $query->get();
 
 
@@ -50,10 +54,14 @@ class TaskController extends Controller
     }
 
     public function view(Request $request){
+
+
         $data = $request->all();
         $data['task'] =  Task::with(['type','status','priority','project','executor','creator'])
             ->where(['id'=>$data['id']])
             ->first();
+
+
 
         $data['projects'] = \App\Models\Project::all();
         $data['taskTypes'] = TaskType::all();
@@ -67,16 +75,18 @@ class TaskController extends Controller
     public function complete(Request $request){
         $data = $request->all();
         $task = Task::query()->where(['id'=>$data['id']])->first();
+        $message = 'Задание № '.$task->id . ' ' . $task->name . ' переведено из статуса '. $task->status->name . ' в статус ';
         if ($task->executor->id == Auth::id()){
             $task->task_status_id = $data['status_id'];
-            if ($task->task_status_id == 4){
-                $qa = User::query()->where(['user_type_id'=>5])->first();
-                $task->executor_id = $qa->id;
-            }else{
-                $user = User::with(['department'])->where(['id'=>$task->executor->id])->first();
-                $task->executor_id = $user->department->chief_id;
-            }
+            $task->executor_id = $data['executor_id'];
+            if($data['status_id'] == 5)
+                $task->date_end = (new \DateTime('now'))->format('Y-w-d h:m:s');
             $task->save();
+            $task->refresh();
+
+            $message .= $task->status->name . ' пользователем ' . Auth::user()->name;
+
+            Telegram::sendMessage($message);
         }
 
         return redirect('/task?id='.$task->id);
